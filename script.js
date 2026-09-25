@@ -1,6 +1,6 @@
 document.getElementById("year").textContent = new Date().getFullYear();
 
-// Header background on scroll
+// Header shadow/opacity state on scroll
 const header = document.getElementById("siteHeader");
 const onScroll = () => {
   header.classList.toggle("is-scrolled", window.scrollY > 40);
@@ -18,22 +18,33 @@ document.getElementById("mainNav").addEventListener("click", (e) => {
   if (e.target.tagName === "A") header.classList.remove("nav-open");
 });
 
-// Contact form — this is a static site with no backend, so this opens
-// the visitor's email client pre-filled. Swap for a service like
-// Formspree, Basin, or Netlify Forms if this ever moves off a plain
-// GitHub Pages host.
+// Contact form — submits to Formspree (see README for setup) so it
+// works on a static GitHub Pages site with no backend of its own.
 const form = document.getElementById("contactForm");
 const note = document.getElementById("formNote");
-form.addEventListener("submit", (e) => {
+
+form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const name = form.name.value.trim();
-  const email = form.email.value.trim();
-  const message = form.message.value.trim();
+  const submitBtn = form.querySelector("button[type='submit']");
+  submitBtn.disabled = true;
+  note.textContent = "Sending…";
 
-  const subject = encodeURIComponent(`New message from ${name} via Atoosa Reiki site`);
-  const body = encodeURIComponent(`${message}\n\n— ${name} (${email})`);
-  // TODO: replace this address with Atoosa's real email
-  window.location.href = `mailto:hello@atoosareiki.com?subject=${subject}&body=${body}`;
+  try {
+    const response = await fetch(form.action, {
+      method: "POST",
+      body: new FormData(form),
+      headers: { Accept: "application/json" }
+    });
 
-  note.textContent = "Opening your email app to send this…";
+    if (response.ok) {
+      note.textContent = "Thank you — your message has been sent. Atoosa will get back to you soon.";
+      form.reset();
+    } else {
+      note.textContent = "Something went wrong sending that. Please try again, or email atoosareiki@gmail.com directly.";
+    }
+  } catch (err) {
+    note.textContent = "Something went wrong sending that. Please try again, or email atoosareiki@gmail.com directly.";
+  } finally {
+    submitBtn.disabled = false;
+  }
 });
